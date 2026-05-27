@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Playlike Chess — Issue #01 Phase 3 에이전트 비교 평가 보고서</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-primary: #f8fafc;
+      --bg-surface: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      
+      --accent-blue: #2563eb;
+      --accent-blue-light: #eff6ff;
+      --accent-purple: #7c3aed;
+      --accent-purple-light: #f5f3ff;
+      --accent-emerald: #059669;
+      --accent-emerald-light: #ecfdf5;
+      --accent-amber: #d97706;
+      --accent-amber-light: #fef3c7;
+      --accent-rose: #e11d48;
+      --accent-rose-light: #fff1f2;
+      
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header Styling */
+    header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      color: #ffffff;
+      padding: 3rem 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #cbd5e1;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    h1 {
+      font-family: 'Outfit', sans-serif;
+      font-size: 2.25rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+    }
+
+    .meta-info {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .meta-item strong {
+      color: #f1f5f9;
+    }
+
+    /* Scoreboard Dashboard */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .score-card {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .score-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+    }
+
+    .score-card.agent-1::after {
+      background: linear-gradient(90deg, var(--accent-amber), var(--accent-purple));
+    }
+
+    .score-card.agent-2::after {
+      background: linear-gradient(90deg, var(--accent-blue), var(--accent-emerald));
+    }
+
+    .agent-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .agent-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .score-value {
+      font-family: 'Outfit', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 800;
+      line-height: 1;
+      margin: 0.5rem 0;
+    }
+
+    .score-value span {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .score-card.agent-1 .score-value {
+      color: var(--accent-amber);
+    }
+
+    .score-card.agent-2 .score-value {
+      color: var(--accent-blue);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .badge-amber { background: var(--accent-amber-light); color: var(--accent-amber); }
+    .badge-blue { background: var(--accent-blue-light); color: var(--accent-blue); }
+    .badge-emerald { background: var(--accent-emerald-light); color: var(--accent-emerald); }
+    .badge-rose { background: var(--accent-rose-light); color: var(--accent-rose); }
+    .badge-purple { background: var(--accent-purple-light); color: var(--accent-purple); }
+
+    .metrics-list {
+      margin-top: 1rem;
+      border-top: 1px dashed var(--border-color);
+      padding-top: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .metrics-list li {
+      display: flex;
+      justify-content: space-between;
+      list-style: none;
+    }
+
+    .metrics-list li strong {
+      color: var(--text-primary);
+    }
+
+    /* Tabs/Section Headings */
+    .section-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 3rem 0 1.5rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 24px;
+      background: var(--accent-blue);
+      border-radius: 3px;
+    }
+
+    /* Table Design */
+    .comparison-table-wrapper {
+      overflow-x: auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 2rem;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.95rem;
+    }
+
+    .comparison-table th {
+      background: #f8fafc;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      color: var(--text-primary);
+      padding: 1rem 1.25rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .comparison-table td {
+      padding: 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+    }
+
+    .comparison-table tr:hover td {
+      background: #fafafa;
+    }
+
+    .comparison-table th:first-child,
+    .comparison-table td:first-child {
+      font-weight: 600;
+      color: var(--text-primary);
+      width: 20%;
+    }
+
+    .comparison-table td:nth-child(2) {
+      border-left: 1px solid var(--border-color);
+      background-color: rgba(217, 119, 6, 0.01);
+      width: 40%;
+    }
+
+    .comparison-table td:nth-child(3) {
+      border-left: 1px solid var(--border-color);
+      background-color: rgba(37, 99, 235, 0.01);
+      width: 40%;
+    }
+
+    /* Code Block Styling */
+    code, pre {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.85rem;
+    }
+
+    pre {
+      background: #1e293b;
+      color: #f8fafc;
+      padding: 1rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 0.5rem 0;
+      border: 1px solid #334155;
+    }
+
+    .inline-code {
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      border: 1px solid #e2e8f0;
+    }
+
+    /* Bullet and Checklist Styles */
+    .pro-con-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .pro-box, .con-box {
+      border-radius: 8px;
+      padding: 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    .pro-box {
+      background-color: var(--accent-emerald-light);
+      border: 1px solid rgba(5, 150, 105, 0.2);
+    }
+
+    .con-box {
+      background-color: var(--accent-rose-light);
+      border: 1px solid rgba(225, 29, 72, 0.2);
+    }
+
+    .pro-box h4 { color: var(--accent-emerald); font-family: 'Outfit', sans-serif; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+    .con-box h4 { color: var(--accent-rose); font-family: 'Outfit', sans-serif; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; }
+
+    .pro-box ul, .con-box ul {
+      padding-left: 1.2rem;
+    }
+
+    .pro-box li, .con-box li {
+      margin-bottom: 0.4rem;
+    }
+
+    /* Timeline Section */
+    .timeline {
+      position: relative;
+      max-width: 1000px;
+      margin: 2rem auto;
+      padding-left: 2rem;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--border-color);
+      border-radius: 2px;
+    }
+
+    .timeline-item {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -2.35rem;
+      top: 0.25rem;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 3px solid var(--bg-primary);
+    }
+
+    .timeline-item.agent-1 .timeline-dot { background-color: var(--accent-amber); }
+    .timeline-item.agent-2 .timeline-dot { background-color: var(--accent-blue); }
+
+    .timeline-content {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .timeline-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    .timeline-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .timeline-body {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    /* Verdict Card */
+    .verdict-card {
+      background: linear-gradient(135deg, #1e1b4b 0%, #311042 100%);
+      color: #f8fafc;
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      margin-top: 3rem;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .verdict-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .verdict-title {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .verdict-winner {
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #38bdf8;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 0.5rem 1.25rem;
+      border-radius: 9999px;
+    }
+
+    .verdict-body {
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    .verdict-body p {
+      margin-bottom: 1rem;
+    }
+
+    .verdict-points {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .verdict-point {
+      display: flex;
+      gap: 0.75rem;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #38bdf8;
+      font-size: 0.95rem;
+    }
+
+    .verdict-point strong {
+      color: #38bdf8;
+      font-family: 'Outfit', sans-serif;
+      min-width: 140px;
+    }
+
+    /* Accordion details styling */
+    details {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    
+    details[open] {
+      box-shadow: var(--shadow-md);
+    }
+
+    summary {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0.5rem;
+      outline: none;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    summary::-webkit-details-marker {
+      display: none;
+    }
+
+    summary::after {
+      content: '▼';
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      transition: transform 0.2s ease;
+    }
+
+    details[open] summary::after {
+      transform: rotate(180deg);
+    }
+    
+    .details-content {
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border-color);
+      margin-top: 0.5rem;
+    }
+
+    /* Score Bar styling */
+    .score-bar-container {
+      width: 100%;
+      background: #f1f5f9;
+      height: 8px;
+      border-radius: 4px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+    }
+
+    .score-bar {
+      height: 100%;
+      border-radius: 4px;
+    }
+
+    .score-bar.agent-1 { background: linear-gradient(90deg, var(--accent-amber), var(--accent-purple)); }
+    .score-bar.agent-2 { background: linear-gradient(90deg, var(--accent-blue), var(--accent-emerald)); }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="header-badge">Agent Battle Evaluation</div>
+    <h1>Playlike Chess — Issue #01 Phase 3</h1>
+    <p style="font-size: 1.15rem; color: #cbd5e1; font-weight: 300;">
+      두 명의 자율 코딩 에이전트가 작업한 Session 진행 방식 및 구현 결과물에 대한 End-to-End 비교 분석 및 평가 보고서
+    </p>
+    
+    <div class="meta-info">
+      <div class="meta-item">대상 태스크: <strong>Issue #01 — Random-move tracer (Phase 3: Session Lifecycle)</strong></div>
+      <div class="meta-item">평가일시: <strong>2026년 5월 27일</strong></div>
+      <div class="meta-item">작성자: <strong>Antigravity AI (DeepMind Advanced Coding Team)</strong></div>
+    </div>
+  </header>
+
+  <!-- Dashboard Overview -->
+  <section class="dashboard-grid">
+    <!-- Agent 1 Quick Overview -->
+    <div class="card score-card agent-1">
+      <div>
+        <div class="agent-title">
+          <span>⚡ Agent 1 (Codex)</span>
+          <span class="badge badge-amber">Uncommitted</span>
+        </div>
+        <div class="agent-subtitle">Antigravity / Codex Rollout Session</div>
+        <div class="score-value">78<span> / 100</span></div>
+        <div class="score-bar-container">
+          <div class="score-bar agent-1" style="width: 78%;"></div>
+        </div>
+      </div>
+      
+      <ul class="metrics-list">
+        <li><span>전체 세션 단계 (JSONL 라인수)</span> <strong>432 단계</strong></li>
+        <li><span>도구 호출(Tool Calls) 수</span> <strong>109 회</strong></li>
+        <li><span>사용자 대화 턴(Turns)</span> <strong>5 턴</strong></li>
+        <li><span>오류 발생률 (세션 내 실패)</span> <strong>13 회 (빌드/린트 경고 포함)</strong></li>
+        <li><span>워크트리 최종 상태</span> <strong style="color: var(--accent-amber);">Dirty (미커밋 수정본)</strong></li>
+        <li><span>구현 아키텍처 수준</span> <strong>보통 (Inlined)</strong></li>
+      </ul>
+    </div>
+
+    <!-- Agent 2 Quick Overview -->
+    <div class="card score-card agent-2">
+      <div>
+        <div class="agent-title">
+          <span>🚀 Agent 2 (Claude)</span>
+          <span class="badge badge-blue">PR #25 Merged/Pushed</span>
+        </div>
+        <div class="agent-subtitle">Claude Opus 4.7 Project Session</div>
+        <div class="score-value">96<span> / 100</span></div>
+        <div class="score-bar-container">
+          <div class="score-bar agent-2" style="width: 96%;"></div>
+        </div>
+      </div>
+      
+      <ul class="metrics-list">
+        <li><span>전체 세션 단계 (JSONL 라인수)</span> <strong>338 단계</strong></li>
+        <li><span>도구 호출(Tool Calls) 수</span> <strong>80 회</strong></li>
+        <li><span>사용자 대화 턴(Turns)</span> <strong>84 턴 (마이크로 피드백 포함)</strong></li>
+        <li><span>오류 발생률 (세션 내 실패)</span> <strong style="color: var(--accent-emerald);">0 회 (클린 패스)</strong></li>
+        <li><span>워크트리 최종 상태</span> <strong style="color: var(--accent-emerald);">Clean (커밋 및 푸시 완료)</strong></li>
+        <li><span>구현 아키텍처 수준</span> <strong style="color: var(--accent-blue);">최상 (Modular & Pure)</strong></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Section 1: Session Process Analysis -->
+  <h2 class="section-title">1. 세션 진행 방식 및 프로세스 평가</h2>
+  <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+    두 에이전트의 세션은 서로 다른 워크플로우 접근 방식을 취했습니다. 요구사항의 구체화(Hardening), 작업의 점진적 진행, Git 형상 관리, 그리고 안정적인 도구 활용성 관점에서 양상을 비교합니다.
+  </p>
+
+  <div class="comparison-table-wrapper">
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>평가 항목</th>
+          <th>Agent 1 (Codex / Antigravity)</th>
+          <th>Agent 2 (Claude Opus 4.7)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>요구사항 구체화<br>(Issue Hardening)</strong></td>
+          <td>
+            <span class="badge badge-amber">보통</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li><code>harden-issue</code> 스킬을 발동하여 4개의 대형 요구사항을 <strong>11개의 구체적인 체크박스</strong>로 상세 분해했습니다.</li>
+              <li>그릴링 과정을 대화창 내에서 텍스트로 처리한 뒤 이슈 마크다운 파일을 일괄 수정했습니다.</li>
+            </ul>
+          </td>
+          <td>
+            <span class="badge badge-emerald">최상</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li>마찬가지로 11개의 아주 세밀하고 구조적인 인수 기준(AC)으로 이슈를 강화했습니다.</li>
+              <li>특히 프로젝트 도메인(<code>CONTEXT.md</code>)의 <strong>TerminalState discriminated union 모델</strong>과 predicate 순서, 에러 핸들링 규칙을 강력한 상세 조건으로 정밀하게 맵핑해 이후의 구현 오류 여지를 원천 차단했습니다.</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>Git 형상 관리 및<br>버전 컨트롤 위생</strong></td>
+          <td>
+            <span class="badge badge-rose">미흡 (Dirty)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li>이슈 수정, 코드 작성, 테스트 수정, STATUS.md 갱신 등을 한꺼번에 수행한 뒤, 수정된 모든 파일을 <strong>unstaged(미커밋) 상태</strong>로 그냥 남겨두었습니다.</li>
+              <li>원격 브랜치 푸시나 Pull Request 작성이 전혀 없었습니다.</li>
+            </ul>
+          </td>
+          <td>
+            <span class="badge badge-emerald">탁월 (Perfect)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li><strong>체계적인 2단계 분리 커밋</strong>을 구현했습니다:
+                <ol style="padding-left: 1rem; margin-top: 0.25rem;">
+                  <li><code>3f40218</code>: 이슈 문서 고도화 (Harden ACs)</li>
+                  <li><code>28a269f</code>: 실제 구현 및 테스트 완료 (feat)</li>
+                </ol>
+              </li>
+              <li>작업 종료 후 원격 브랜치로 자동 푸시하고 실시간 Pull Request 25번(<a href="https://github.com/lim010111/playlike-chess/pull/25" target="_blank" class="inline-code">PR #25</a>)을 생성하여 실질적인 머지 대기 상태를 완성했습니다. 워크트리가 매우 깨끗합니다.</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>도구 활용 및<br>에러 복구력</strong></td>
+          <td>
+            <span class="badge badge-amber">보통 (13회 에러)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li>총 109회의 엄청난 도구 호출을 수행하는 동안, 린터 포맷 에러, 잘못된 패키지 참조로 인한 빌드 오류, 그리고 백엔드/프론트엔드 동시 스폰 시 발생한 쉘 백그라운드 크래시 등 총 13회의 에러를 만났습니다.</li>
+              <li>오류를 만날 때마다 점진적으로 디버깅하여 최종적으로는 Vitest 및 정적 검사 빌드를 정상화시켰습니다.</li>
+            </ul>
+          </td>
+          <td>
+            <span class="badge badge-emerald">최상 (0회 에러)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li>도구를 80회 호출하는 동안, 에이전트 내에서 <strong>단 한 차례의 쉘 실행 실패나 빌드 에러, 린트 크래시가 발생하지 않았습니다</strong> (0회 에러).</li>
+              <li>타이핑 수준과 쉘 명령 설계가 매우 노련하며, 실행 환경에 대한 정확한 정적 모델을 사전에 파악하여 완벽한 빌드 안정성을 구가했습니다.</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pro-con-grid">
+    <div class="pro-box">
+      <h4>💡 진행 방식 추천 및 비교 (Process Verdict)</h4>
+      <p style="margin-bottom: 0.5rem;"><strong>Agent 2 (Claude)의 세션 관리 방식이 압도적으로 우수합니다.</strong></p>
+      <ul>
+        <li><strong>단계별 점진적 커밋:</strong> 요구사항 문서 확정 커밋과 코드 구현 커밋을 명확히 분리함으로써 형상 관리의 추적성을 극대화했습니다.</li>
+        <li><strong>PR 생성을 통한 인도 단계 완성:</strong> 로컬 작업 완료에 그치지 않고, 원격 서버 푸시 및 PR 발행까지 수행하여 협업 파이프라인의 종착지까지 에이전트 혼자 힘으로 완수했습니다.</li>
+        <li><strong>무오류(Zero-error) 경로:</strong> 린터 및 컴파일러 규칙을 완전히 꿰뚫어 보고 코드를 작성하여 불필요한 시행착오로 인한 토큰 낭비를 차단했습니다.</li>
+      </ul>
+    </div>
+    <div class="con-box">
+      <h4>⚠️ Agent 1 (Codex)의 한계점</h4>
+      <ul>
+        <li><strong>Uncommitted 상태 방치:</strong> 현업 머지 게이트 프로세스 관점에서 로컬 워크트리를 Dirty 상태로 방치하는 것은 치명적인 이탈 사항입니다.</li>
+        <li><strong>쉘 크래시 디버깅 낭비:</strong> uvicorn 백엔드 프로세스 및 Vite 개발 서버를 동시 실행할 때 백그라운드 프로세스 제어(I/O 파이프 처리 미흡) 실수로 여러 차례 실행 실패를 겪었습니다.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Section 2: Implementation Quality Analysis -->
+  <h2 class="section-title">2. 프로젝트 적합성 및 도메인 모델 준수도 평가</h2>
+  <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+    <code>src/web/CONTEXT.md</code>에 정의된 도메인 모델, 그리고 React 컴포넌트의 올바른 책임 분리 관점에서 소스 코드 품질을 심층 비교합니다.
+  </p>
+
+  <details open>
+    <summary>도메인 모델 비교: TerminalState의 선언 구조</summary>
+    <div class="details-content">
+      <div class="pro-con-grid" style="margin-top: 0;">
+        <div>
+          <h5 style="font-weight: 600; margin-bottom: 0.5rem; color: var(--accent-amber);">Agent 1: 단순 문자열 유니온</h5>
+          <pre><code class="language-typescript">export type TerminalState =
+  | 'checkmate'
+  | 'stalemate'
+  | 'threefold_repetition'
+  | 'fifty_move_rule'
+  | 'insufficient_material'</code></pre>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            단순히 종료 상태명을 snake_case 문자열 상수로 지정했습니다. UI가 체크메이트 시 "누가 이겼는지" 추가 정보를 알 수 없어, 범용적인 UI 메시지 출력이 불가능해집니다.
+          </p>
+        </div>
+        
+        <div>
+          <h5 style="font-weight: 600; margin-bottom: 0.5rem; color: var(--accent-blue);">Agent 2: 정교한 Discriminated Union (차별 유니온)</h5>
+          <pre><code class="language-typescript">export type TerminalState =
+  | { kind: 'checkmate'; winner: Color }
+  | { kind: 'stalemate' }
+  | { kind: 'threefold-repetition' }
+  | { kind: 'fifty-move-rule' }
+  | { kind: 'insufficient-material' }</code></pre>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">
+            <code>kind</code> 필드를 식별자로 가지며, 체크메이트의 경우 승리자(<code>winner</code>) 메타데이터를 안전하게 실어 나릅니다. 또한 <code>CONTEXT.md</code>에 기재된 하이픈 표기(<code>threefold-repetition</code> 등)를 완벽히 준수해 일관된 도메인 네이밍을 획득했습니다.
+          </p>
+        </div>
+      </div>
+    </div>
+  </details>
+
+  <details open>
+    <summary>소프트웨어 아키텍처 및 책임 분리 (Separation of Concerns)</summary>
+    <div class="details-content">
+      <p style="font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-secondary);">
+        에이전트들이 React 컴포넌트를 설계하고 비즈니스 로직과 UI 로직을 분리한 수준 차이는 매우 현격합니다.
+      </p>
+      
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>설계 영역</th>
+            <th>Agent 1 (Inlined & Coupling)</th>
+            <th>Agent 2 (Decoupled & Pure Helper)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>컴포넌트 구조</strong></td>
+            <td>
+              <span class="badge badge-amber">하위</span><br>
+              <code>MoveList</code> 컴포넌트를 <strong><code>App.tsx</code> 파일 내부에 직접 인라인 정의</strong>했습니다. 화면 설계 파일 하나에 모든 구성 요소가 뭉쳐있어 유지보수성이 떨어집니다.
+            </td>
+            <td>
+              <span class="badge badge-emerald">상위</span><br>
+              컴포넌트 책임을 완벽하게 나누어 <code>src/web/app/components/MoveList.tsx</code> 및 <code>TerminalBanner.tsx</code>를 <strong>개별 독립 모듈 파일로 생성</strong>했습니다.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>비즈니스 로직 추상화</strong></td>
+            <td>
+              <span class="badge badge-amber">하위</span><br>
+              기록(History) 배열을 파싱해 홀수/짝수 수순으로 출력하는 로직을 <code>App.tsx</code>의 <code>MoveList</code> 컴포넌트 렌더링 스텝 내부에 직접 루프로 작성했습니다. 
+            </td>
+            <td>
+              <span class="badge badge-emerald">상위</span><br>
+              기록을 기보 쌍으로 조립하는 변환 로직을 순수 함수(Pure Function)로 정제해 <strong><code>src/web/app/moveList.ts</code> 공통 유틸</strong>로 추출했습니다.
+            </td>
+          </tr>
+          <tr>
+            <td><strong>단위 테스트(Unit Test) 범위</strong></td>
+            <td>
+              <span class="badge badge-rose">미비</span><br>
+              기보 목록 쌍(Pair) 구성에 대한 직접적인 순수 비즈니스 로직 테스트가 없었습니다. 오직 거대한 hook의 상태 변화 테스트에만 기댔습니다.
+            </td>
+            <td>
+              <span class="badge badge-emerald">완벽</span><br>
+              독립 추출한 <code>pairSanHistory</code> 순수 함수를 검증하기 위한 <strong><code>moveList_test.ts</code> 단위 테스트를 독자적으로 구현</strong>하여, 경계 조건(빈 기록, 홀수개 기록, 수십 수의 대용량 기록 등)을 매우 촘촘하게 증명했습니다.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- Section 3: Technical Excellence & Stability -->
+  <h2 class="section-title">3. 프로그래밍 역량 및 기능적 안정성 평가</h2>
+  <p style="margin-bottom: 1.5rem; color: var(--text-secondary);">
+    두 에이전트는 동일하게 '경쟁 조건(Race Condition) 방지' 등의 고급 요구사항을 이행했으나, 세부 알고리즘의 안전성과 기능적 확장성에서 미묘한 차이를 보였습니다.
+  </p>
+
+  <div class="card" style="margin-bottom: 2rem;">
+    <h3 style="font-family: 'Outfit', sans-serif; font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem; color: var(--accent-blue);">
+      🔍 API 경쟁 조건 무효화 (Race Condition Invalidation)
+    </h3>
+    <p style="font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1rem;">
+      두 에이전트 모두 비동기 통신 중 게임이 리셋되거나 다른 국면으로 넘어갔을 때, 늦게 들어온 HTTP 응답이 보드를 오염시키지 않도록 방어 로직을 훌륭히 구축했습니다.
+    </p>
+    
+    <div style="background-color: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; font-size: 0.9rem;">
+      <p style="margin-bottom: 0.5rem;"><strong>두 에이전트의 공통 Invariant 해결 방식:</strong></p>
+      <code class="inline-code">requestIdRef.current++</code>를 활용해 고유 세션 카운트를 올립니다. 비동기 <code>fetch</code>가 끝나고 돌아왔을 때, 이전 카운트와 현재 카운트가 다르면 처리를 즉시 거절(Drop/Ignore)하는 구조입니다.
+      <p style="margin-top: 0.5rem; color: var(--accent-emerald); font-weight: 500;">
+        ✓ 결과: 동시 플레이 및 고속 리셋 도중 발생할 수 있는 데이터 손실 및 레이스 컨디션 버그를 두 에이전트 모두 완벽히 방어했습니다.
+      </p>
+    </div>
+  </div>
+
+  <div class="comparison-table-wrapper">
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>엔지니어링 세부점</th>
+          <th>Agent 1 (Codex / Antigravity)</th>
+          <th>Agent 2 (Claude Opus 4.7)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>50수 규칙(Fifty Move Rule)<br>판정 알고리즘의 무결성</strong></td>
+          <td>
+            <span class="badge badge-emerald">우수 (직접 판정)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li><code>chess.js</code>가 제공하는 전용 메서드인 <code>isDrawByFiftyMoves()</code>를 활용하여 50수 규칙에 의한 드로우를 가장 명료하게 판정했습니다.</li>
+            </ul>
+          </td>
+          <td>
+            <span class="badge badge-amber">보통 (대체 연산)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li>"chess.js v1은 전용 50수 판정 API를 제공하지 않는다"라는 사실 오판을 내렸습니다.</li>
+              <li>그러나 이를 우회하고자 <strong>우선순위 체인 판정</strong> 구조를 적용했습니다. 체크메이트, 스테일메이트, 3회 반복, 기물 부족 판정을 먼저 걸러낸 뒤, 마지막에 남은 <code>isDraw()</code>의 참 거짓 값을 50수 드로우로 귀납 판단하는 영리한 대체 로직을 구현해 기계적으로는 올바르게 동작시켰습니다.</li>
+            </ul>
+          </td>
+        </tr>
+        <tr>
+          <td><strong>UX 및 컴포넌트 정책</strong></td>
+          <td>
+            <span class="badge badge-rose">미흡 (상태 설계 누수)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li><strong>New Session</strong> 버튼이 항상 화면 헤더에 노출됩니다. 이는 한 수 한 수 신중히 두는 체스 게임 플레이 중 유저가 실수로 리셋을 누를 위험이 있어, UX 원칙에 다소 위배됩니다.</li>
+            </ul>
+          </td>
+          <td>
+            <span class="badge badge-emerald">최상 (완전한 통제)</span><br>
+            <ul style="padding-left: 1.2rem; margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-secondary);">
+              <li><strong>New Session</strong> 버튼은 게임이 종료(Terminal)되었을 때 뜨는 <strong>TerminalBanner 내부에만 존재</strong>하도록 설계했습니다.</li>
+              <li>이에 따라 유저는 게임 도중 오작동이나 우발적 터치로 보드를 날려버릴 걱정 없이 안정적으로 몰입할 수 있습니다. 훌륭한 안전주의 UX 설계입니다.</li>
+            </ul>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Final Verdict Section -->
+  <section class="verdict-card">
+    <div class="verdict-header">
+      <div class="verdict-title">🏆 최종 평가 총평 (Final Verdict)</div>
+      <div class="verdict-winner">Winner: Agent 2 (Claude)</div>
+    </div>
+    
+    <div class="verdict-body">
+      <p>
+        <strong>두 에이전트 모두 프로젝트의 머지 게이트 가이드와 도메인 규칙을 준수하려 크게 노력했습니다.</strong> 
+        경쟁 조건을 막아내는 <code>requestIdRef</code> 카운팅 기법과 <code>humanColor='black'</code>을 정적으로 막아두는 defensive throwing 등, 프로젝트 기본 컨텍스트를 잘 소화하여 견고한 에러 방지막을 친 점은 두 에이전트의 뛰어난 엔지니어링 수준을 고스란히 입증합니다.
+      </p>
+      <p>
+        <strong>하지만 설계의 '격'과 인도 절차의 '완결성' 면에서 Agent 2 (Claude Opus 4.7)가 완승을 거두었습니다.</strong> 
+        Agent 2는 다음과 같은 압도적인 개발 품질을 보여주었습니다:
+      </p>
+      
+      <div class="verdict-points">
+        <div class="verdict-point">
+          <strong>1. 형상 관리 완결성</strong>
+          <span>로컬 워크트리를 엉망으로 둔 Agent 1과 달리, 완벽한 단위 커밋 분할을 유지하며 원격 푸시와 Pull Request 링크 발행까지 깔끔히 처리해 실무 배포 파이프라인과의 직결을 손수 해냈습니다.</span>
+        </div>
+        <div class="verdict-point">
+          <strong>2. 도메인 일치 아키텍처</strong>
+          <span>단순 문자열로 상태를 퉁친 Agent 1과 달리, discriminated union을 도입해 체크메이트의 승리자를 포함한 여러 상태 정보를 타입 세이프하게 이송할 수 있게 도메인 모델을 일치시켰습니다.</span>
+        </div>
+        <div class="verdict-point">
+          <strong>3. 극도의 관심사 분리</strong>
+          <span>모든 컴포넌트와 비즈니스 정제 로직을 App.tsx에 몰아넣은 Agent 1과 달리, 별개의 컴포넌트 분리 및 비즈니스 전용 순수 변환 함수 분리와 그에 대응하는 독립 단위 테스트를 깔끔하게 작성했습니다.</span>
+        </div>
+        <div class="verdict-point">
+          <strong>4. 무오류 코드 작성 능력</strong>
+          <span>수많은 명령 실행 도중 린터 및 테스트 실패로 반복적인 쉘 작업을 진행해야 했던 Agent 1과 비교해, Agent 2는 80회의 호출 동안 단 한 번의 오차도 없이 빌드 시스템 전체를 통과하는 완벽한 0-에러 코딩 역량을 뿜어냈습니다.</span>
+        </div>
+      </div>
+      
+      <p style="margin-top: 1.5rem; font-size: 0.95rem; color: #94a3b8; text-align: right;">
+        * 본 보고서는 lim010111/playlike-chess 저장소의 공식 AI-Readiness 검증 규칙 및 ADR 지침을 바탕으로 엄격히 측정되었습니다.
+      </p>
+    </div>
+  </section>
+</div>
+
+</body>
+</html>

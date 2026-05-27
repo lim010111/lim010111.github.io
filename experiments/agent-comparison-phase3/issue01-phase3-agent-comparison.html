@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Issue 01 Phase 3 Agent End-to-End 평가 보고서</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f8fa;
+        --paper: #ffffff;
+        --ink: #1f2933;
+        --muted: #64748b;
+        --line: #d8dee8;
+        --soft: #eef2f7;
+        --blue: #205493;
+        --blue-soft: #e8f1fc;
+        --green: #136f45;
+        --green-soft: #e5f5ed;
+        --amber: #8a5a00;
+        --amber-soft: #fff4d6;
+        --red: #a23a3a;
+        --red-soft: #fae8e8;
+        --purple: #5b4b8a;
+        --purple-soft: #efecfa;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        line-height: 1.62;
+      }
+
+      main {
+        width: min(1180px, calc(100vw - 40px));
+        margin: 0 auto;
+        padding: 32px 0 56px;
+      }
+
+      header {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 28px;
+        margin-bottom: 18px;
+      }
+
+      h1,
+      h2,
+      h3 {
+        line-height: 1.25;
+        margin: 0;
+      }
+
+      h1 {
+        font-size: clamp(1.65rem, 3vw, 2.35rem);
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 1.25rem;
+        margin-bottom: 12px;
+      }
+
+      h3 {
+        font-size: 1rem;
+        margin-bottom: 8px;
+      }
+
+      p {
+        margin: 0 0 10px;
+      }
+
+      code {
+        padding: 0.08rem 0.28rem;
+        border-radius: 4px;
+        background: var(--soft);
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+        font-size: 0.92em;
+      }
+
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 18px;
+        margin-top: 18px;
+        color: var(--muted);
+        font-size: 0.94rem;
+      }
+
+      .meta div {
+        min-width: 0;
+      }
+
+      .path {
+        display: block;
+        overflow-wrap: anywhere;
+        color: var(--ink);
+      }
+
+      section {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 22px;
+        margin-top: 18px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .score-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .score-card,
+      .agent-card,
+      .finding {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 16px;
+        background: #fff;
+      }
+
+      .score-card strong {
+        display: block;
+        font-size: 1.7rem;
+        line-height: 1.1;
+        margin: 8px 0;
+      }
+
+      .winner {
+        border-color: #b7d9c7;
+        background: var(--green-soft);
+      }
+
+      .runner {
+        border-color: #d7c9a6;
+        background: var(--amber-soft);
+      }
+
+      .risk {
+        border-color: #e4b5b5;
+        background: var(--red-soft);
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 26px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--soft);
+        color: var(--ink);
+        font-size: 0.82rem;
+        font-weight: 650;
+        white-space: nowrap;
+      }
+
+      .badge.green {
+        border-color: #b7d9c7;
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .badge.amber {
+        border-color: #d7c9a6;
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .badge.red {
+        border-color: #e4b5b5;
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .badge.blue {
+        border-color: #b7cceb;
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .badge.purple {
+        border-color: #cdc5e8;
+        background: var(--purple-soft);
+        color: var(--purple);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+        font-size: 0.94rem;
+      }
+
+      th,
+      td {
+        border-bottom: 1px solid var(--line);
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      th {
+        background: var(--soft);
+        font-weight: 750;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      ul {
+        margin: 8px 0 0 1.15rem;
+        padding: 0;
+      }
+
+      li + li {
+        margin-top: 6px;
+      }
+
+      .lead {
+        font-size: 1.04rem;
+        color: #334155;
+        margin-top: 12px;
+      }
+
+      .callout {
+        border-left: 4px solid var(--blue);
+        background: var(--blue-soft);
+        padding: 14px 16px;
+        border-radius: 6px;
+        margin-top: 12px;
+      }
+
+      .verdict {
+        border-left: 4px solid var(--green);
+        background: var(--green-soft);
+      }
+
+      .caution {
+        border-left: 4px solid var(--amber);
+        background: var(--amber-soft);
+      }
+
+      .bad {
+        border-left: 4px solid var(--red);
+        background: var(--red-soft);
+      }
+
+      .small {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .mono-list {
+        display: grid;
+        gap: 6px;
+        margin-top: 10px;
+      }
+
+      .mono-list code {
+        display: block;
+        overflow-wrap: anywhere;
+        padding: 8px 10px;
+      }
+
+      .rating {
+        display: inline-block;
+        min-width: 46px;
+        padding: 2px 8px;
+        border-radius: 5px;
+        background: var(--soft);
+        font-weight: 750;
+        text-align: center;
+      }
+
+      .rating.good {
+        background: var(--green-soft);
+        color: var(--green);
+      }
+
+      .rating.mid {
+        background: var(--amber-soft);
+        color: var(--amber);
+      }
+
+      .rating.low {
+        background: var(--red-soft);
+        color: var(--red);
+      }
+
+      .two-col {
+        columns: 2;
+        column-gap: 30px;
+      }
+
+      .two-col li {
+        break-inside: avoid;
+      }
+
+      @media (max-width: 860px) {
+        main {
+          width: min(100vw - 24px, 1180px);
+          padding-top: 16px;
+        }
+
+        header,
+        section {
+          padding: 18px;
+        }
+
+        .grid,
+        .meta,
+        .score-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .two-col {
+          columns: 1;
+        }
+      }
+
+      @media print {
+        body {
+          background: #fff;
+        }
+
+        main {
+          width: 100%;
+          padding: 0;
+        }
+
+        header,
+        section {
+          break-inside: avoid;
+          border-color: #bbb;
+          margin-top: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="badge blue">End-to-End 평가 보고서</span>
+        <h1>Issue 01 Phase 3: 두 에이전트 세션 및 구현 비교</h1>
+        <p class="lead">
+          같은 작업인 <strong>Random-move tracer Phase 3: Session lifecycle</strong>를 수행한 두 워크트리와 raw 세션을 기준으로,
+          세션 진행 방식, 프로젝트 적합성, 프로그래밍 품질, 검증 습관을 비교했다.
+        </p>
+        <div class="meta">
+          <div>
+            <strong>작성일</strong>
+            <span class="path">2026-05-27</span>
+          </div>
+          <div>
+            <strong>비교 기준</strong>
+            <span class="path">Issue 01 Phase 3 AC, Web/Engine CONTEXT, 실제 diff, raw session JSONL</span>
+          </div>
+          <div>
+            <strong>Agent 1 워크트리</strong>
+            <span class="path"><code>~/projects/chess_transformer/.claude/worktrees/01-random-move-tracer-p3</code></span>
+          </div>
+          <div>
+            <strong>Agent 2 워크트리</strong>
+            <span class="path"><code>~/projects/chess_transformer/.claude/worktrees/01-random-move-tracer-p3-claude</code></span>
+          </div>
+          <div>
+            <strong>Agent 1 raw session</strong>
+            <span class="path"><code>~/.codex/sessions/2026/05/27/rollout-2026-05-27T15-08-34-019e680c-8f9b-7ed2-bbb7-8bbf949843ab.jsonl</code></span>
+          </div>
+          <div>
+            <strong>Agent 2 raw session</strong>
+            <span class="path"><code>~/.claude/projects/-...-chess-transformer--claude-worktrees-01-random-move-tracer-p3-claude/145f1275-60c6-473d-9d96-98a19c1a84b9.jsonl</code></span>
+          </div>
+        </div>
+      </header>
+
+      <section>
+        <h2>최종 판정</h2>
+        <div class="callout verdict">
+          <p>
+            <strong>종합 승자는 Agent 2</strong>다. Agent 2는 이슈 하드닝을 실제 제품 계약으로 끌어올린 뒤,
+            그 계약에 맞춰 타입 모델, UI 컴포넌트, move-list helper, 테스트를 분리해 구현했다. 특히
+            <code>TerminalState</code>를 discriminated union으로 둔 점과 <code>TerminalBanner</code>,
+            <code>MoveList</code>, <code>pairSanHistory</code>를 분리한 점이 프로젝트의 장기 유지보수성에 더 맞다.
+          </p>
+          <p>
+            다만 Agent 1도 무시할 수 없다. Agent 1은 <code>chess.js</code>의 <code>isDrawByFiftyMoves()</code>
+            전용 API를 정확히 사용했고, reset 중 stale engine reply를 테스트했으며, 프론트엔드 외에 backend pytest와 HTTP smoke까지
+            더 넓게 확인했다. 구현 완료성과 실행력만 보면 Agent 1이 더 빠르고 적극적이었다.
+          </p>
+        </div>
+
+        <div class="score-grid" aria-label="score summary">
+          <div class="score-card runner">
+            <span class="badge amber">Session</span>
+            <strong>Agent 2</strong>
+            <p>질문과 결정 고정이 더 명시적이다.</p>
+          </div>
+          <div class="score-card winner">
+            <span class="badge green">Project Fit</span>
+            <strong>Agent 2</strong>
+            <p>Web CONTEXT의 enum-shaped Terminal state에 더 가깝다.</p>
+          </div>
+          <div class="score-card winner">
+            <span class="badge green">Programming</span>
+            <strong>Agent 2</strong>
+            <p>타입 모델과 컴포넌트 경계가 더 견고하다.</p>
+          </div>
+          <div class="score-card runner">
+            <span class="badge amber">Verification</span>
+            <strong>Agent 1</strong>
+            <p>더 넓은 로컬 smoke와 backend 확인을 수행했다.</p>
+          </div>
+          <div class="score-card winner">
+            <span class="badge green">Overall</span>
+            <strong>Agent 2</strong>
+            <p>리뷰 가능성과 장기 품질에서 앞선다.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>비교 요약표</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>항목</th>
+              <th>Agent 1: Codex worktree</th>
+              <th>Agent 2: Claude worktree</th>
+              <th>평가</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>작업 상태</td>
+              <td>워크트리 dirty 상태. 5개 파일 수정, 310 insertions / 28 deletions.</td>
+              <td>깨끗한 worktree. 두 커밋: <code>3f40218</code> hardening, <code>28a269f</code> implementation. PR #25 생성.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>세션 진행 방식</td>
+              <td>탐색 후 스스로 scope 결정을 내리고 구현. 빠르지만 UX/API tradeoff를 사용자와 충분히 잠그지는 않음.</td>
+              <td>여러 round의 질문으로 Terminal UI, 라벨, reset, race, 타입, 테스트 전략을 고정한 뒤 구현.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>Terminal 타입</td>
+              <td><code>'checkmate'</code> 등 flat string union. <code>isGameOver</code>는 derived boolean으로 유지.</td>
+              <td><code>{ kind: 'checkmate', winner }</code> 형태의 discriminated union.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>50-move rule</td>
+              <td><code>chess.isDrawByFiftyMoves()</code> 사용. local dependency를 더 정확히 읽었다.</td>
+              <td><code>isDraw()</code> fallback 사용. 동작은 가능하지만 "전용 API가 없다"는 세션/커밋 설명은 부정확하다.</td>
+              <td><span class="badge amber">Agent 1</span></td>
+            </tr>
+            <tr>
+              <td>New Session UX</td>
+              <td>상단 버튼이 항상 보임. mid-session reset 가능.</td>
+              <td>Terminal banner 안에서만 버튼이 보임. accidental reset을 줄이고 hardened AC와 일치.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>Move list</td>
+              <td><code>App.tsx</code> 내부 inline component로 pair row를 직접 구성.</td>
+              <td><code>MoveList.tsx</code>와 pure helper <code>pairSanHistory</code> 분리, dedicated unit test 추가.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>테스트 수</td>
+              <td>Vitest 2 files, 11 tests passed.</td>
+              <td>Vitest 3 files, 18 tests passed.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>검증 폭</td>
+              <td>세션상 <code>pnpm test/lint/typecheck/build</code>, <code>uv run pytest</code>, <code>git diff --check</code>, frontend/backend smoke 수행.</td>
+              <td><code>pnpm typecheck/test/lint</code> 통과 후 PR 생성. manual two-terminal smoke는 의도적으로 남김.</td>
+              <td><span class="badge amber">Agent 1</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <h2>세션 진행 평가</h2>
+        <div class="grid">
+          <article class="agent-card">
+            <h3>Agent 1: 빠른 자율 실행형</h3>
+            <p>
+              Agent 1은 <code>harden-issue</code> 스킬 계약을 확인하고, 처음에는 이슈 파일 경로를 요구했다. 경로를 받은 뒤에는
+              issue file, issue tracker guide, CONTEXT-MAP, Web CONTEXT, PRD, ADR, hook/API/UI/test 파일을 폭넓게 읽었다.
+              이후 "white-user lifecycle 완성"으로 scope를 고정하고 바로 AC hardening과 구현을 진행했다.
+            </p>
+            <ul>
+              <li>장점: 환경을 실제로 읽고, Web이 Terminal state를 소유한다는 도메인 계약을 파악했다.</li>
+              <li>장점: implementation까지 밀고 가는 속도가 빠르고, 마지막에 backend와 frontend smoke까지 확인했다.</li>
+              <li>약점: UX/API 결정들을 사용자에게 선택지로 묻기보다는 스스로 확정했다.</li>
+              <li>약점: 완료 후 PR/commit 형태로 정리하지 않았고, 평가 시점에 dirty worktree로 남아 있다.</li>
+            </ul>
+          </article>
+
+          <article class="agent-card winner">
+            <h3>Agent 2: 명시적 의사결정형</h3>
+            <p>
+              Agent 2는 hardening 자체를 독립 작업처럼 다뤘다. Terminal UI, label depth, 50-move detection, move-list layout,
+              New Session 노출 시점, <code>humanColor='black'</code> 범위, reset race, terminal type, test coverage를
+              round별로 질문하고, 결정된 내용을 이슈 AC에 먼저 반영했다.
+            </p>
+            <ul>
+              <li>장점: 사용자의 선택을 거쳐 AC를 구체화했기 때문에 구현 기준이 리뷰 가능한 계약으로 남았다.</li>
+              <li>장점: hardening commit과 implementation commit을 분리해 변경 의도가 잘 드러난다.</li>
+              <li>장점: PR #25를 열고 manual smoke를 별도 체크리스트로 남겼다.</li>
+              <li>약점: <code>chess.js</code> 1.4.0에 <code>isDrawByFiftyMoves()</code>가 있는데도 "전용 API가 없다"고 판단했다.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="callout verdict">
+          <p>
+            <strong>세션 방식의 승자: Agent 2.</strong> 이 작업은 단순 코드 추가가 아니라 Web CONTEXT의 "Terminal state" 개념을
+            UI와 hook API로 승격하는 작업이었다. 이런 경우에는 Agent 2처럼 tradeoff를 먼저 잠그는 진행 방식이 더 적절하다.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>구현 적합성 평가</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Phase 3 요구</th>
+              <th>Agent 1 구현</th>
+              <th>Agent 2 구현</th>
+              <th>판정</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>5개 Terminal-state 조건을 구분해 표시</td>
+              <td>flat enum과 label map으로 표시. checkmate winner 정보는 별도 표현하지 않음.</td>
+              <td>discriminated union으로 checkmate winner까지 표현하고 exact label switch 사용.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>새 Session 시작</td>
+              <td><code>startNewSession()</code>으로 reset. in-flight response invalidation 포함.</td>
+              <td><code>resetSession()</code>으로 reset. request id bump 포함.</td>
+              <td><span class="badge blue">동률</span></td>
+            </tr>
+            <tr>
+              <td>end-to-end stuck/error 방지</td>
+              <td>scripted threefold end-to-end + stale response reset test. 세션상 backend/frontend smoke 수행.</td>
+              <td>5 terminal fixture + reset test. manual random-vs-random smoke는 PR 체크리스트로 남김.</td>
+              <td><span class="badge amber">Agent 1 약간 우세</span></td>
+            </tr>
+            <tr>
+              <td>SAN move list</td>
+              <td>App 내부에서 rows를 만든다. 사용자에게는 보이지만 재사용/테스트 경계가 약하다.</td>
+              <td>pure helper와 component로 분리하고 helper test를 추가했다.</td>
+              <td><span class="badge green">Agent 2</span></td>
+            </tr>
+            <tr>
+              <td>Phase 3 scope 유지</td>
+              <td><code>humanColor='black'</code> throw 유지. Opponent/Stockfish 미도입.</td>
+              <td><code>humanColor='black'</code> throw 유지. Opponent/Stockfish 미도입.</td>
+              <td><span class="badge blue">동률</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout verdict">
+          <p>
+            <strong>프로젝트 적합성 승자: Agent 2.</strong> Web CONTEXT가 말하는 "enum-shaped concept the UI dispatches on"을
+            Agent 2가 더 직접적으로 구현했다. Agent 1의 flat string도 동작하지만, checkmate winner처럼 UI 의미에 필요한 데이터를
+            타입에 담지 못한다.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>프로그래밍 품질 평가</h2>
+        <div class="grid">
+          <article class="finding">
+            <h3>Agent 1 품질 분석</h3>
+            <p><span class="rating mid">7.6</span> 기능 완성도와 race 방어는 좋지만, abstraction 경계는 다소 얇다.</p>
+            <ul>
+              <li><strong>좋음:</strong> <code>isDrawByFiftyMoves()</code> 전용 API를 사용해 의도를 정확히 표현했다.</li>
+              <li><strong>좋음:</strong> reset 시 <code>requestIdRef</code> 증가로 stale engine response를 무효화했고 테스트도 있다.</li>
+              <li><strong>좋음:</strong> 기존 <code>isGameOver</code> 호환 필드를 유지해 migration risk가 낮다.</li>
+              <li><strong>아쉬움:</strong> <code>MoveList</code>가 <code>App.tsx</code> 내부에 있어 테스트 가능한 pure boundary가 없다.</li>
+              <li><strong>아쉬움:</strong> terminal value가 flat string이라 checkmate winner 같은 의미 정보를 타입으로 강제하지 못한다.</li>
+              <li><strong>아쉬움:</strong> New Session 버튼이 항상 보이는 선택은 원래 broad AC에는 가능하지만, accidental reset UX에 약하다.</li>
+            </ul>
+          </article>
+
+          <article class="finding winner">
+            <h3>Agent 2 품질 분석</h3>
+            <p><span class="rating good">8.7</span> 타입 모델링, UI 분리, 테스트 경계가 더 좋다.</p>
+            <ul>
+              <li><strong>좋음:</strong> <code>TerminalState</code>를 discriminated union으로 모델링해 UI switch가 자연스럽다.</li>
+              <li><strong>좋음:</strong> <code>TerminalBanner</code>, <code>MoveList</code>, <code>pairSanHistory</code>를 분리했다.</li>
+              <li><strong>좋음:</strong> move-list pairing helper에 별도 unit test가 있어 회귀 탐지가 쉽다.</li>
+              <li><strong>좋음:</strong> checkmate winner를 타입에 포함해 결과 라벨을 정확히 만들 수 있다.</li>
+              <li><strong>아쉬움:</strong> <code>chess.js</code>의 50-move 전용 API 존재를 놓쳐 <code>isDraw()</code> fallback과 부정확한 주석/커밋 설명을 남겼다.</li>
+              <li><strong>아쉬움:</strong> reset test는 completed engine reply 후 reset만 검증하고, Agent 1처럼 stale in-flight reply case를 직접 검증하지 않는다.</li>
+            </ul>
+          </article>
+        </div>
+
+        <div class="callout caution">
+          <p>
+            <strong>중요한 nuance:</strong> Agent 2가 종합적으로 더 낫지만, 50-move rule 구현만 보면 Agent 1이 더 정확하다.
+            Agent 2의 fallback은 현재 predicate order상 실사용에서는 통과 가능성이 높지만, dependency API를 잘못 파악한 설명은
+            장기 유지보수 문서로는 품질 감점이다.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>검증 결과</h2>
+        <p>보고서 작성 중 두 워크트리 모두에 대해 프론트엔드 검증을 재실행했다.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>검증</th>
+              <th>Agent 1</th>
+              <th>Agent 2</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>pnpm test -- --run</code></td>
+              <td><span class="badge green">pass</span> 2 files, 11 tests</td>
+              <td><span class="badge green">pass</span> 3 files, 18 tests</td>
+            </tr>
+            <tr>
+              <td><code>pnpm typecheck</code></td>
+              <td><span class="badge green">pass</span></td>
+              <td><span class="badge green">pass</span></td>
+            </tr>
+            <tr>
+              <td><code>pnpm lint</code></td>
+              <td><span class="badge green">pass</span> Biome checked 16 files</td>
+              <td><span class="badge green">pass</span> Biome checked 20 files</td>
+            </tr>
+            <tr>
+              <td><code>pnpm build</code></td>
+              <td><span class="badge green">pass</span> Vite build succeeded</td>
+              <td><span class="badge green">pass</span> Vite build succeeded</td>
+            </tr>
+            <tr>
+              <td><code>git diff --check</code></td>
+              <td><span class="badge green">pass</span></td>
+              <td><span class="badge green">pass</span> checked commit diff</td>
+            </tr>
+            <tr>
+              <td>세션상 추가 검증</td>
+              <td>backend <code>uv run pytest</code>, HTTP <code>POST /move</code>, frontend 200 smoke까지 수행했다고 raw session에 기록됨.</td>
+              <td>PR 본문에 manual two-terminal smoke를 남은 체크리스트로 기록.</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <p>
+            검증 습관만 보면 Agent 1이 더 공격적으로 "실제 동작"까지 확인했다. 반면 Agent 2는 수동 smoke를 완료했다고 과장하지 않고
+            PR 체크리스트로 남겼다. 둘 중 어느 쪽이 더 좋은지는 팀 정책에 따라 갈리지만, 보고서 기준으로는 Agent 1에 검증 폭 점수를 더 준다.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2>세부 증거</h2>
+        <div class="grid">
+          <article class="agent-card">
+            <h3>Agent 1 evidence</h3>
+            <div class="mono-list">
+              <code>Raw session lines: 432</code>
+              <code>Changed files: .scratch issue, STATUS.md, App.tsx, useChessSession.ts, useChessSession_test.ts</code>
+              <code>Diff stat: 5 files, 310 insertions, 28 deletions</code>
+              <code>Terminal API: terminalState: 'checkmate' | 'stalemate' | 'threefold_repetition' | 'fifty_move_rule' | 'insufficient_material' | null</code>
+              <code>50-move: chess.isDrawByFiftyMoves()</code>
+              <code>Reset API: startNewSession()</code>
+            </div>
+          </article>
+
+          <article class="agent-card">
+            <h3>Agent 2 evidence</h3>
+            <div class="mono-list">
+              <code>Raw session lines: 338</code>
+              <code>Commit 3f40218: docs(tracker): harden Phase 3 ACs</code>
+              <code>Commit 28a269f: feat(web): Phase 3 - Session lifecycle</code>
+              <code>PR: https://github.com/lim010111/playlike-chess/pull/25</code>
+              <code>Diff stat: 9 files, 399 insertions, 54 deletions</code>
+              <code>Terminal API: discriminated union with checkmate winner</code>
+              <code>Reset API: resetSession()</code>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section>
+        <h2>리스크 및 후속 권고</h2>
+        <ul class="two-col">
+          <li>
+            Agent 2 구현을 채택한다면 <code>detectTerminal()</code>의 50-move branch는
+            <code>chess.isDrawByFiftyMoves()</code>로 바꾸고, "chess.js v1 has no dedicated predicate" 주석과 커밋/PR 설명은 정정하는 편이 좋다.
+          </li>
+          <li>
+            Agent 2에 Agent 1의 stale in-flight reset test를 이식하면 reset lifecycle 안정성이 더 좋아진다.
+          </li>
+          <li>
+            Agent 1 구현을 채택한다면 <code>TerminalState</code>를 discriminated union으로 바꾸고
+            <code>MoveList</code>/<code>pairSanHistory</code>를 분리하는 리팩터가 필요하다.
+          </li>
+          <li>
+            두 구현 모두 UI는 inline style 기반이다. 현재 프로젝트 스타일과 일치하지만, 이후 Stockfish panel이 들어오면 layout component boundary를 다시 잡아야 한다.
+          </li>
+          <li>
+            실제 merge 후보는 dirty worktree 상태인 Agent 1보다 committed + PR 상태인 Agent 2가 운영상 더 다루기 쉽다.
+          </li>
+          <li>
+            Phase 3 마지막 acceptance는 random-vs-random two-terminal manual smoke로 닫는 것이 좋다. 자동 fixture만으로 "랜덤 세션이 실제 브라우저에서 끝까지 흐른다"를 완전히 대체하지는 못한다.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>최종 결론</h2>
+        <div class="callout verdict">
+          <p>
+            <strong>Agent 2를 기준 구현으로 삼는 것이 맞다.</strong> Agent 2는 세션을 더 잘 운영했고, 프로젝트 문서의 언어를 타입과 UI 구조로
+            더 잘 번역했으며, PR로 넘기기 좋은 형태까지 정리했다. 프로그래밍적으로도 component/helper/test 경계가 더 좋다.
+          </p>
+          <p>
+            <strong>단, Agent 1에서 배울 점은 있다.</strong> <code>isDrawByFiftyMoves()</code> 사용, in-flight stale response 테스트,
+            backend/frontend smoke 검증은 Agent 2 구현에 이식할 가치가 높다. 최종 merge candidate는 Agent 2를 기반으로 하되,
+            이 세 가지 보강을 추가하면 가장 탄탄하다.
+          </p>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

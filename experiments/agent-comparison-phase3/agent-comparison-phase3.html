@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>Phase 3 이중 에이전트 비교 보고서 — Codex vs Claude</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --fg: #1a1a1a;
+    --fg-muted: #555;
+    --bg: #fafafa;
+    --bg-panel: #fff;
+    --bg-code: #f1f1f1;
+    --border: #d8d8d8;
+    --accent: #0a5;
+    --accent-w1: #b85;
+    --accent-w2: #38a;
+    --warn: #c33;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #e9e9e9;
+      --fg-muted: #aaa;
+      --bg: #181818;
+      --bg-panel: #222;
+      --bg-code: #2a2a2a;
+      --border: #3a3a3a;
+      --accent: #4d8;
+      --accent-w1: #d97;
+      --accent-w2: #6bd;
+      --warn: #f66;
+    }
+  }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans CJK KR",
+                 "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    color: var(--fg);
+    background: var(--bg);
+    line-height: 1.6;
+    font-size: 15px;
+  }
+  main { max-width: 900px; margin: 2.5rem auto; padding: 0 1.25rem; }
+  h1 {
+    font-size: 1.8rem;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.01em;
+  }
+  .subtitle { color: var(--fg-muted); margin: 0 0 2rem; font-size: 0.95rem; }
+  h2 {
+    font-size: 1.35rem;
+    margin: 2.5rem 0 0.75rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 { font-size: 1.1rem; margin: 1.75rem 0 0.5rem; }
+  h4 { font-size: 0.98rem; margin: 1.25rem 0 0.4rem; color: var(--fg-muted); }
+  p, ul, ol { margin: 0.5rem 0; }
+  ul, ol { padding-left: 1.4rem; }
+  code, pre {
+    font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Consolas, monospace;
+    font-size: 0.88em;
+  }
+  code { background: var(--bg-code); padding: 0.05em 0.35em; border-radius: 3px; }
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    line-height: 1.45;
+  }
+  pre code { background: transparent; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0.75rem 0;
+    font-size: 0.92rem;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.4rem 0.6rem;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--bg-panel); font-weight: 600; }
+  td.num { font-variant-numeric: tabular-nums; text-align: right; }
+  .panel {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin: 1rem 0;
+  }
+  .panel-w1 { border-left: 4px solid var(--accent-w1); }
+  .panel-w2 { border-left: 4px solid var(--accent-w2); }
+  .winner {
+    font-weight: 700;
+    color: var(--accent);
+    margin-top: 0.75rem;
+  }
+  .tag {
+    display: inline-block;
+    padding: 0.05em 0.5em;
+    border-radius: 3px;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    vertical-align: middle;
+  }
+  .tag-w1 { background: var(--accent-w1); color: #fff; }
+  .tag-w2 { background: var(--accent-w2); color: #fff; }
+  .ok { color: var(--accent); font-weight: 600; }
+  .partial { color: var(--accent-w1); font-weight: 600; }
+  .miss { color: var(--warn); font-weight: 600; }
+  blockquote {
+    border-left: 3px solid var(--border);
+    margin: 0.75rem 0;
+    padding: 0.25rem 0 0.25rem 0.9rem;
+    color: var(--fg-muted);
+    font-style: italic;
+  }
+  .quote-cite { font-size: 0.8em; color: var(--fg-muted); font-style: normal; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
+  .footer { color: var(--fg-muted); font-size: 0.85rem; margin-top: 3rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Phase 3 이중 에이전트 비교 보고서</h1>
+<p class="subtitle">
+  <span class="tag tag-w1">W1 · Codex</span>
+  vs
+  <span class="tag tag-w2">W2 · Claude</span>
+  — playlike-chess 이슈 01 Phase 3 (Session lifecycle) · 2026-05-27
+</p>
+
+<h2>1. Executive summary</h2>
+<div class="panel">
+  <p>
+    두 에이전트는 동일한 첫 프롬프트(<code>$harden-issue ... Phase 3 ... harden 후에 작업 시작하자</code>)와 거의 같은 시간(약 26–27분)을 받아
+    이슈 01의 Phase 3 (Session lifecycle, AC 4개)를 각자의 워크트리에서 수행했다.
+  </p>
+  <p>
+    <strong>W1 (Codex)</strong> 은 hardening 의 깊이는 좋았으나 코드 변경을 <strong>한 건도 커밋하지 않은</strong> 채(<code>main..HEAD</code> = 0 커밋, 5개 파일 unstaged) 세션이 종료됐다.
+    마지막 어시스턴트 메시지는 자기 자신의 raw JSONL 경로를 출력하는 self-diagnostic이었다.
+  </p>
+  <p>
+    <strong>W2 (Claude)</strong> 는 하나의 세션 안에서 hardening → 구현 → 2개 분리 커밋(<code>3f40218</code> docs, <code>28a269f</code> feat) → PR #25 생성까지 완성했다.
+    AC 4개를 모두 구현했고, 코드도 Phase 2 의 <code>components/</code> 분리 패턴을 일관되게 이었다.
+  </p>
+  <p>
+    <strong>종합 결론:</strong> 진행 방식·프로젝트 적합성·프로그래밍 우수성 세 축 모두에서 <span class="tag tag-w2">W2 · Claude</span> 가 앞선다.
+    단, W1 의 AC 분해(12 체크박스)와 invariant 주석 문서화는 양쪽이 공유할 가치가 있고, terminal 판정 predicate 선택에서는 W1 이 약간 더 보수적이다.
+  </p>
+</div>
+
+<h2>2. 메타데이터</h2>
+<table>
+  <thead>
+    <tr><th>항목</th><th>W1 · Codex</th><th>W2 · Claude</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>워크트리</td>
+      <td><code>.claude/worktrees/01-random-move-tracer-p3</code></td>
+      <td><code>.claude/worktrees/01-random-move-tracer-p3-claude</code></td>
+    </tr>
+    <tr>
+      <td>세션 시작 — 종료</td>
+      <td>2026-05-27 06:09:23 — 06:36:23 UTC (≈27분)</td>
+      <td>2026-05-27 06:13:22 — 06:39:53 UTC (≈26분)</td>
+    </tr>
+    <tr>
+      <td>커밋 (<code>main..HEAD</code>)</td>
+      <td class="num miss">0</td>
+      <td class="num ok">2</td>
+    </tr>
+    <tr>
+      <td>변경 파일 / 라인</td>
+      <td class="num">5 / +310 −28 <span class="miss">(unstaged)</span></td>
+      <td class="num">9 / +400 −48</td>
+    </tr>
+    <tr>
+      <td>신규 파일</td>
+      <td class="num">0</td>
+      <td class="num">4 (TerminalBanner, MoveList 컴포넌트 + moveList 헬퍼·테스트)</td>
+    </tr>
+    <tr>
+      <td>PR</td>
+      <td class="miss">없음</td>
+      <td>PR #25 open (19/20 AC, all tests green)</td>
+    </tr>
+    <tr>
+      <td>세션 JSONL 라인 수</td>
+      <td class="num">432</td>
+      <td class="num">338</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. Phase 3 정답 기준</h2>
+<p>출처: <code>.scratch/playlike-chess/issues/01-random-move-tracer.md</code> Phase 3 섹션.</p>
+<ol>
+  <li>Session 이 다섯 가지 Terminal-state 조건 각각에서 올바르게 종료되고 UI 에 표시된다 (checkmate / stalemate / threefold repetition / 50-move rule / insufficient material).</li>
+  <li>페이지 리로드 없이 새 Session 을 시작할 수 있다.</li>
+  <li>Session 을 1수부터 Terminal state 까지 end-to-end 로 막힘없이 플레이할 수 있다.</li>
+  <li>SAN (Standard Algebraic Notation) move list 가 Session 중 표시된다.</li>
+</ol>
+<p>추가 가드레일 (메모리 + Phase 2 컨벤션):</p>
+<ul>
+  <li>Promotion picker 는 q / r / b / n 모두 지원 — <strong>auto-queen 금지</strong>.</li>
+  <li>5-way terminal 판정 predicate 순서가 정확해야 한다 (chess.js <code>isDraw()</code> 가 stalemate · threefold · insufficient material 도 참이므로).</li>
+  <li>Phase 2 의 컴포넌트 분리 패턴 (<code>components/Board.tsx</code>, <code>components/PromotionPicker.tsx</code>) 을 잇는다.</li>
+</ul>
+
+<h2>4. 세션 진행 분석</h2>
+
+<h3>4.1 W1 · Codex 진행 흐름</h3>
+<div class="panel panel-w1">
+  <ol>
+    <li><strong>경로 요청</strong>: 첫 프롬프트가 이슈 파일 경로를 포함하지 않자, harden-issue 스킬 계약대로 추정하지 않고 사용자에게 명시 경로를 요청.</li>
+    <li><strong>단계적 grilling</strong>: 이슈 파일 형식 검증 → <code>CONTEXT.md</code> / <code>CONTEXT-MAP.md</code> / <code>docs/adr</code> 정독 → Phase 3 의 4개 AC 를 <strong>12개 원자 체크박스</strong>로 분해. TerminalState enum, 판정 순서, 배너 라벨 6개, <code>startNewSession()</code> 계약, New Session 버튼 배치, SAN 목록, hook 단위 테스트, reset 테스트, <code>humanColor='black'</code> throw, 수동 스모크 등.</li>
+    <li><strong>구현 진입</strong>: hook (<code>useChessSession.ts</code>) + <code>App.tsx</code> 의 인라인 MoveList + hook 테스트 추가. </li>
+    <li><strong>세션 종료</strong>: 구현된 코드가 working tree 에 남았으나 <strong>커밋·PR 모두 없음</strong>. 마지막 어시스턴트 메시지는 자기 세션의 raw JSONL 경로를 사용자에게 답하는 self-diagnostic.</li>
+  </ol>
+  <blockquote>
+    "이제 경로가 있으니 해당 이슈 파일을 기준으로 진행하겠습니다. 먼저 이슈 형식, 프로젝트 맥락, ADR, Phase 3 가 닿는 코드 표면을 같이 읽어서 AC 를 실제 작업 가능한 단위로 좁히겠습니다."
+    <div class="quote-cite">— W1 / Codex, 06:10:31 UTC</div>
+  </blockquote>
+  <blockquote>
+    "[세션 자진 종료] 현재 Codex 세션 raw 파일: <code>~/.codex/sessions/2026/05/27/rollout-...jsonl</code>"
+    <div class="quote-cite">— W1 / Codex, 마지막 메시지</div>
+  </blockquote>
+</div>
+
+<h3>4.2 W2 · Claude 진행 흐름</h3>
+<div class="panel panel-w2">
+  <ol>
+    <li><strong>경로 요청</strong>: W1 과 동일하게, 경로 미제공 시 사용자에게 요청 — 같은 스킬 계약을 따름.</li>
+    <li><strong>빠른 AC 분석</strong>: CONTEXT-MAP → src/web/CONTEXT.md → ADR 캐시 히트로 빠르게 컨텍스트화 후, AC 를 11개 원자 체크박스로 분해 (W1 의 12개와 분해 결이 유사하지만 약간 다름).</li>
+    <li><strong>TDD 구현</strong>: 약 06:20 부터 Bash·Edit·Write 집중 사용. hook 테스트 (<code>useChessSession_test.ts</code> +181 라인) 와 헬퍼 테스트 (<code>moveList_test.ts</code>) 를 구현과 짝지어 작성.</li>
+    <li><strong>2-커밋 분리</strong>:
+      <ul>
+        <li><code>3f40218 docs(tracker): harden Phase 3 ACs</code> — 이슈 파일만 갱신</li>
+        <li><code>28a269f feat(web): Phase 3 — Session lifecycle</code> — 구현 + 테스트</li>
+      </ul>
+    </li>
+    <li><strong>PR #25 생성</strong> 후 세션 종료. away_summary 가 자체적으로 남긴 결론: "PR #25 is open with 19/20 ACs done and all tests green. Next: run the two-terminal manual smoke ... and check the last AC before merging."</li>
+  </ol>
+  <blockquote>
+    "Decompose Phase 3's 4-bullet AC block into 11 atomic checkboxes covering: TerminalState discriminated union on the hook, the 5-way detection predicate order (incl. the chess.js <code>isDraw()</code> fallback for the 50-move rule) ..."
+    <div class="quote-cite">— W2 / Claude, commit <code>3f40218</code> 메시지</div>
+  </blockquote>
+  <blockquote>
+    "Closes out the random-move tracer's intent: the user can now play a Session from start to a typed Terminal state, see the move list in SAN, and start a fresh Session without reloading."
+    <div class="quote-cite">— W2 / Claude, commit <code>28a269f</code> 메시지</div>
+  </blockquote>
+</div>
+
+<h3>4.3 세션 정량 비교</h3>
+<table>
+  <thead>
+    <tr><th>지표</th><th>W1 · Codex</th><th>W2 · Claude</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>총 JSONL 라인</td><td class="num">432</td><td class="num">338</td></tr>
+    <tr><td>Agent 메시지 수</td><td class="num">22</td><td class="num">122</td></tr>
+    <tr><td>대표 도구 사용</td><td>function_call 위주 (CLI shell)</td><td>Bash 29 · Edit 11 · Write 7 · Read 10 · TaskCreate 6</td></tr>
+    <tr><td>Hardening AC 분해</td><td>12개 체크박스</td><td>11개 체크박스</td></tr>
+    <tr><td>테스트 작성 시점</td><td>구현 이후 (사후형)</td><td>구현과 동시 (TDD-페어형)</td></tr>
+    <tr><td>커밋 전략</td><td class="miss">없음 (working tree 만)</td><td>docs / feat 의도 분리 2-커밋</td></tr>
+    <tr><td>세션 내 closure</td><td class="partial">미완 (self-diagnostic 으로 종료)</td><td class="ok">완전 (PR 생성까지)</td></tr>
+  </tbody>
+</table>
+
+<h2>5. 구현물 분석</h2>
+
+<h3>5.1 W1 · Codex 구현</h3>
+<div class="panel panel-w1">
+  <p><strong>변경된 파일 (5)</strong>: <code>App.tsx</code>, <code>hooks/useChessSession.ts</code>, <code>hooks/useChessSession_test.ts</code>, <code>STATUS.md</code>, 이슈 파일.</p>
+
+  <h4>TerminalState — literal union</h4>
+<pre><code>// useChessSession.ts:9
+export type TerminalState =
+  | 'checkmate'
+  | 'stalemate'
+  | 'threefold_repetition'
+  | 'fifty_move_rule'
+  | 'insufficient_material'
+
+export function detectTerminalState(chess: Chess): TerminalState | null {
+  if (chess.isCheckmate()) return 'checkmate'
+  if (chess.isStalemate()) return 'stalemate'
+  if (chess.isThreefoldRepetition()) return 'threefold_repetition'
+  if (chess.isDrawByFiftyMoves()) return 'fifty_move_rule'
+  if (chess.isInsufficientMaterial()) return 'insufficient_material'
+  return null
+}
+</code></pre>
+
+  <h4>startNewSession — requestId 무효화</h4>
+<pre><code>// useChessSession.ts:211
+const startNewSession = useCallback(() =&gt; {
+  requestIdRef.current += 1   // 비행 중 응답 무효화
+  const chess = new Chess(options.initialFen)
+  chessRef.current = chess
+  setFen(chess.fen())
+  setHistory([])
+  setAwaiting(false)
+  setTerminalState(detectTerminalState(chess))
+  setError(null)
+  setPendingPromotion(null)
+}, [options.initialFen])
+</code></pre>
+
+  <h4>MoveList — App.tsx 내부에 인라인 컴포넌트</h4>
+  <p><code>App.tsx:12</code> 에 <code>function MoveList({ history })</code> 가 직접 정의되어 있고, 컴포넌트 파일이 따로 없다. white/black 쌍을 row 단위로 묶어 <code>&lt;ol&gt;</code> 로 렌더링.</p>
+</div>
+
+<h3>5.2 W2 · Claude 구현</h3>
+<div class="panel panel-w2">
+  <p><strong>변경된 파일 (9)</strong>: <code>App.tsx</code>, <code>hooks/useChessSession.ts</code>, <code>hooks/useChessSession_test.ts</code>, 신규 <code>components/TerminalBanner.tsx</code>, 신규 <code>components/MoveList.tsx</code>, 신규 <code>moveList.ts</code>, 신규 <code>moveList_test.ts</code>, <code>STATUS.md</code>, 이슈 파일.</p>
+
+  <h4>TerminalState — discriminated union (winner 동반)</h4>
+<pre><code>// useChessSession.ts:10
+export type TerminalState =
+  | { kind: 'checkmate'; winner: Color }
+  | { kind: 'stalemate' }
+  | { kind: 'threefold-repetition' }
+  | { kind: 'fifty-move-rule' }
+  | { kind: 'insufficient-material' }
+
+// useChessSession.ts:49
+function detectTerminal(chess: Chess): TerminalState | null {
+  if (chess.isCheckmate()) {
+    return { kind: 'checkmate', winner: chess.turn() === 'w' ? 'black' : 'white' }
+  }
+  if (chess.isStalemate()) return { kind: 'stalemate' }
+  if (chess.isThreefoldRepetition()) return { kind: 'threefold-repetition' }
+  if (chess.isInsufficientMaterial()) return { kind: 'insufficient-material' }
+  if (chess.isDraw()) return { kind: 'fifty-move-rule' }   // fallback
+  return null
+}
+</code></pre>
+
+  <h4>resetSession + 422 defensive path</h4>
+<pre><code>// useChessSession.ts:209
+const resetSession = useCallback(() =&gt; {
+  // Bump the request id so any /move response still in flight from the
+  // prior Session is dropped on arrival by the stale-id guard.
+  ...
+})
+
+// requestEngineMove(): 422 응답 시에도 로컬 terminal 우선 처리 (네트워크 에러로 masking 안 함)
+</code></pre>
+
+  <h4>SAN — pure helper + 컴포넌트 분리</h4>
+<pre><code>// moveList.ts (신규)
+export function pairSanHistory(history: HistoryEntry[]): string[] {
+  const lines: string[] = []
+  for (let i = 0; i &lt; history.length; i += 2) {
+    const moveNumber = i / 2 + 1
+    const white = history[i].san
+    const black = history[i + 1]?.san
+    lines.push(black ? `${moveNumber}. ${white} ${black}` : `${moveNumber}. ${white}`)
+  }
+  return lines
+}
+</code></pre>
+  <p><code>moveList_test.ts</code> 가 empty / 1.5 수 / 짝수 / 홀수 4 케이스를 단위 테스트로 커버. <code>components/MoveList.tsx</code> 는 helper 호출 + 렌더링만, <code>components/TerminalBanner.tsx</code> 는 5-way switch 로 6개 라벨 출력 + New Session 버튼.</p>
+</div>
+
+<h3>5.3 AC 충족 매트릭스</h3>
+<table>
+  <thead>
+    <tr><th>AC</th><th>W1 · Codex</th><th>W2 · Claude</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>① 5-way terminal 감지 + UI 라벨</td>
+      <td><span class="ok">충족</span> · literal union, <code>isDrawByFiftyMoves()</code> 직접 사용</td>
+      <td><span class="ok">충족</span> · discriminated union (winner 동반), <code>isDraw()</code> fallback</td>
+    </tr>
+    <tr>
+      <td>② 페이지 리로드 없이 새 Session</td>
+      <td><span class="ok">충족</span> · <code>startNewSession()</code> + requestId 무효화</td>
+      <td><span class="ok">충족</span> · <code>resetSession()</code> + 동일한 stale-id 가드</td>
+    </tr>
+    <tr>
+      <td>③ End-to-end 플레이</td>
+      <td><span class="ok">충족</span> · hook 테스트로 8-수 threefold 시나리오 검증</td>
+      <td><span class="ok">충족</span> · 풀 라운드트립 테스트 + 5-way terminal 모두 hook 테스트</td>
+    </tr>
+    <tr>
+      <td>④ SAN move list 표시</td>
+      <td><span class="ok">충족</span> · App.tsx 인라인 MoveList</td>
+      <td><span class="ok">충족</span> · pure helper + 컴포넌트 분리 + 단위 테스트</td>
+    </tr>
+    <tr>
+      <td>가드레일: q/r/b/n promotion (auto-queen 금지)</td>
+      <td><span class="ok">유지</span> · Phase 2 PromotionPicker 그대로</td>
+      <td><span class="ok">유지</span> · 동일</td>
+    </tr>
+    <tr>
+      <td>Manual smoke test 기록</td>
+      <td><span class="partial">미실행</span></td>
+      <td><span class="partial">미실행</span> (PR 설명에 19/20 으로 자기 신고)</td>
+    </tr>
+    <tr>
+      <td>커밋 / PR</td>
+      <td><span class="miss">없음 (working tree 미커밋)</span></td>
+      <td><span class="ok">2 커밋 + PR #25</span></td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>6. 평가 — 네 축</h2>
+
+<h3>6.1 세션 진행 방식</h3>
+<p>
+  두 에이전트 모두 harden-issue 스킬의 "경로를 추정하지 않고 사용자에게 묻는다" 계약을 정확히 지켰고, 분해된 AC 수도 11–12 로 거의 같다.
+  결정적 차이는 <strong>세션을 어떻게 종료시키는가</strong> 였다.
+  W1 은 구현 코드는 만들어 두고도 커밋·PR·체크박스 갱신 중 어느 것도 마치지 못한 채 자기 raw JSONL 경로를 출력하면서 끝났다 (사용자가 결과를 보려면 working tree 를 직접 확인해야 함).
+  반면 W2 는 docs/feat 의도 분리 2-커밋과 PR #25 생성으로 자기 결과물을 외부에서 검토 가능한 상태로 닫았다.
+</p>
+<p class="winner">Winner: W2 · Claude</p>
+<p>
+  단, "AC 12개 분해"라는 산출물 자체는 W1 의 hardening 깊이가 약간 더 세밀했다.
+  hardening 만 평가한다면 동률에 가깝고, "세션이 약속한 다음 단계까지 도달했는가" 라는 운영 관점에서 W2 의 우세가 명확하다.
+</p>
+
+<h3>6.2 프로젝트 적합성</h3>
+<p>
+  Phase 2 는 이미 <code>src/web/app/components/Board.tsx</code>, <code>components/PromotionPicker.tsx</code> 라는 분리 패턴을 정착시켰다.
+  W2 는 이 패턴을 그대로 이어 <code>components/TerminalBanner.tsx</code> + <code>components/MoveList.tsx</code> + 별도 <code>moveList.ts</code> 헬퍼로 확장했다.
+  W1 은 MoveList 를 <code>App.tsx</code> 안에 인라인 함수로 정의해 같은 컴포넌트 그래뉼래리티를 깬다.
+  또 W2 는 helper 단위 테스트(<code>moveList_test.ts</code>)까지 Phase 2 의 <code>apiClient_test.ts</code> · <code>useChessSession_test.ts</code> 패턴에 맞춰 추가했다.
+  이슈 트래커 가드레일(<code>## Acceptance criteria</code> 체크박스 갱신) 도 W2 만 커밋으로 반영했다.
+</p>
+<p class="winner">Winner: W2 · Claude</p>
+
+<h3>6.3 프로그래밍 우수성</h3>
+<p>축별로 정직하게 짚어 보면:</p>
+<ul>
+  <li><strong>타입 표현력</strong> — W2 의 discriminated union (<code>{ kind: 'checkmate'; winner: Color }</code>) 이 W1 의 literal union보다 우수하다. 체크메이트의 승자라는 도메인 정보를 타입 안에 안전하게 동반시킨다.</li>
+  <li><strong>5-way 판정 robustness</strong> — 이 축에서는 <em>W1 이 약간 더 보수적</em> 이다. W1 은 <code>isDrawByFiftyMoves()</code> 라는 전용 predicate 를 직접 호출한다. W2 는 같은 라인의 주석에 "chess.js v1 exposes no dedicated fifty-move-only predicate" 라고 적었지만, 실제로 chess.js v1.x 에는 <code>isDrawByFiftyMoves()</code> 가 존재한다. W2 의 fallback (다른 draw predicate 들이 모두 false 라면 <code>isDraw()</code> 는 fifty-move 일 것이라는 가정) 은 현재 chess.js 동작 하에서는 옳지만 미래 변경에 더 취약하다.</li>
+  <li><strong>코드 구조</strong> — W2 가 컴포넌트·헬퍼·테스트를 분리해 단일 책임이 더 명확하다. W1 의 인라인 MoveList 는 v1 에서는 짧지만 곧 hot path 가 되면 분리를 강제당할 자리다.</li>
+  <li><strong>테스트 커버리지</strong> — 두 쪽 모두 hook 레벨 5-way terminal 테스트와 reset 무효화 테스트를 갖췄다. W2 는 그 위에 helper 단위 테스트(짝수·홀수·빈 입력)를 추가한 점이 약간 더 두텁다.</li>
+  <li><strong>경계 처리</strong> — W2 의 <code>requestEngineMove()</code> 422 defensive 경로(로컬 terminal 을 네트워크 에러로 가리지 않음) 와 <code>resetSession</code> 의 비행 응답 폐기는 W1 의 동등 동작과 같지만, W2 쪽은 주석으로 의도를 명시한다.</li>
+</ul>
+<p class="winner">Winner: W2 · Claude (단, 판정 predicate 만 보면 W1 이 더 안전)</p>
+
+<h3>6.4 종합</h3>
+<p>
+  네 축 중 1번(진행 방식), 2번(프로젝트 적합성), 3번(프로그래밍 우수성) 모두 W2 가 앞선다.
+  W2 의 우세는 한 줄로 요약하면 "<strong>약속을 외부 산출물로 닫았다</strong>" — 코드가 워크트리에 있을 뿐 아니라 커밋 메시지, 분리된 컴포넌트, 단위 테스트, PR 설명을 통해 외부에서 검증 가능한 상태가 됐다는 점이다.
+  W1 은 같은 26분 동안 동등한 코드를 만들었지만 그 코드를 working tree 에만 남겨두어 다음 작업자(혹은 같은 에이전트의 다음 세션) 가 다시 발견하고 정리해야 하는 상태로 두었다.
+</p>
+<p class="winner">최종 Winner: W2 · Claude</p>
+
+<h2>7. 부록</h2>
+
+<h3>7.1 main 대비 변경 파일 트리</h3>
+<pre><code>W1 · Codex (모두 unstaged)
+└── 5 files changed, +310 −28
+    ├── .scratch/playlike-chess/issues/01-random-move-tracer.md
+    ├── STATUS.md
+    ├── src/web/app/App.tsx                          (+ inline MoveList)
+    ├── src/web/app/hooks/useChessSession.ts         (+ TerminalState, startNewSession)
+    └── src/web/app/hooks/useChessSession_test.ts    (+ 5-way terminal tests)
+
+W2 · Claude (2 commits ahead)
+└── 9 files changed, +400 −48
+    ├── .scratch/playlike-chess/issues/01-random-move-tracer.md
+    ├── STATUS.md
+    ├── src/web/app/App.tsx                          (compose only)
+    ├── src/web/app/components/TerminalBanner.tsx    (new)
+    ├── src/web/app/components/MoveList.tsx          (new)
+    ├── src/web/app/hooks/useChessSession.ts         (+ TerminalState, resetSession)
+    ├── src/web/app/hooks/useChessSession_test.ts    (+ 5-way + reset tests)
+    ├── src/web/app/moveList.ts                      (new pure helper)
+    └── src/web/app/moveList_test.ts                 (new helper unit tests)
+</code></pre>
+
+<h3>7.2 인용한 핵심 코드</h3>
+
+<h4>W1 — terminal 판정 (literal union)</h4>
+<pre><code>// hooks/useChessSession.ts:45-52
+export function detectTerminalState(chess: Chess): TerminalState | null {
+  if (chess.isCheckmate()) return 'checkmate'
+  if (chess.isStalemate()) return 'stalemate'
+  if (chess.isThreefoldRepetition()) return 'threefold_repetition'
+  if (chess.isDrawByFiftyMoves()) return 'fifty_move_rule'
+  if (chess.isInsufficientMaterial()) return 'insufficient_material'
+  return null
+}
+</code></pre>
+
+<h4>W2 — terminal 판정 (discriminated union)</h4>
+<pre><code>// hooks/useChessSession.ts:49-58
+function detectTerminal(chess: Chess): TerminalState | null {
+  if (chess.isCheckmate()) {
+    return { kind: 'checkmate', winner: chess.turn() === 'w' ? 'black' : 'white' }
+  }
+  if (chess.isStalemate()) return { kind: 'stalemate' }
+  if (chess.isThreefoldRepetition()) return { kind: 'threefold-repetition' }
+  if (chess.isInsufficientMaterial()) return { kind: 'insufficient-material' }
+  if (chess.isDraw()) return { kind: 'fifty-move-rule' }
+  return null
+}
+</code></pre>
+
+<h4>W2 — SAN pure helper</h4>
+<pre><code>// moveList.ts (신규, 12 lines)
+export function pairSanHistory(history: HistoryEntry[]): string[] {
+  const lines: string[] = []
+  for (let i = 0; i &lt; history.length; i += 2) {
+    const moveNumber = i / 2 + 1
+    const white = history[i].san
+    const black = history[i + 1]?.san
+    lines.push(black ? `${moveNumber}. ${white} ${black}` : `${moveNumber}. ${white}`)
+  }
+  return lines
+}
+</code></pre>
+
+<h3>7.3 양쪽이 똑같이 잘한 것 / 똑같이 빠뜨린 것</h3>
+<ul>
+  <li><span class="ok">잘한 것 ✓</span> harden-issue 스킬 계약 (경로 추정 금지) 준수.</li>
+  <li><span class="ok">잘한 것 ✓</span> promotion picker q/r/b/n 모두 유지 — auto-queen 금지 가드레일 준수.</li>
+  <li><span class="ok">잘한 것 ✓</span> 비행 중 <code>/move</code> 응답을 stale-id 가드로 무효화하는 reset 패턴.</li>
+  <li><span class="ok">잘한 것 ✓</span> hook-레벨 5-way terminal 테스트(8-수 threefold 시나리오 등) 추가.</li>
+  <li><span class="partial">빠뜨린 것 ✗</span> Phase 3 AC 의 명시 항목인 <em>two-terminal manual smoke test</em> 실제 실행 기록은 양쪽 모두 없음.</li>
+</ul>
+
+<hr>
+<p class="footer">
+  Generated 2026-05-27 · 분석 기반: 4개 Explore 에이전트의 사실 보고 + 직접 git/세션 JSONL 재검증.
+</p>
+
+</main>
+</body>
+</html>
